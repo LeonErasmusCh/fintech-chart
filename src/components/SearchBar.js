@@ -8,12 +8,7 @@ export default function SearchBar() {
 
     const url = "https://mindicador.cl/api";
 
-    // Set current year in variable and all years in reverse to 1977(** stating point/date of data and api **)
-    let thisYear = new Date().getFullYear()
-    let years = [];
-    for (let i = thisYear; i > 1976; i--) {
-        years.push(i);
-    }
+
     // Initial Indicators values set with Fetch from api
     const [indicators, setIndicators] = useState([])
     // Indicator selected
@@ -24,10 +19,6 @@ export default function SearchBar() {
     const [month, setMonth] = useState("")
     // Year Selected
     const [year, setYear] = useState("")
-    // Array of objects Month data for Indicator
-    const [monthIndicator, setMonthIndicator] = useState([])
-    // Filtered data for Chart
-    const [chart, setChart] = useState([])
     // Loader
     const [loading, setLoading] = useState(true)
     // Day Intervals for fetching data x7
@@ -36,6 +27,53 @@ export default function SearchBar() {
     const [chartData, setChartData] = useState([])
     // chart data
     let data = []
+    // Set current year in variable and all years in reverse // setYearLimit function sets limit to available data from api(** stating point/date of data and api **)
+    let years = [];
+    
+    let thisYear = new Date().getFullYear()
+    
+    //for (let i = thisYear; i > 1976; i--) {
+    //    years.push(i);
+    //}
+
+    let limit = 1977
+    function setYearLimit() {
+        for (let i = thisYear; i >= limit; i--) {
+            if (indicator ==="uf") {
+                 limit = 1977
+            } else if (indicator === "ivp") {
+                limit = 1990
+            } else if (indicator === "dolar"){
+                limit = 1984
+            } else if (indicator === "dolar_intercambio"){
+                limit = 1988
+            } else if (indicator === "euro"){
+                limit = 1999
+            } else if (indicator === "ipc"){
+                limit = 1928
+            } else if (indicator === "utm"){
+                limit = 1990
+            } else if (indicator === "imacec"){
+                limit = 1990
+            } else if (indicator === "tpm"){
+                limit = 1977
+            } else if (indicator === "libra_cobre"){
+                limit = 2012
+            } else if (indicator === "tasa_desempleo"){
+                limit = 2009
+            } else if (indicator === "bitcoin"){
+                limit = 2009
+            }
+            years.push(i)
+        }
+
+    }
+    setYearLimit();
+
+
+
+
+
 
 
     // onChange to select single MONTH
@@ -70,9 +108,9 @@ export default function SearchBar() {
     // How many days in month
     //let getDaysInMonth = function (month, year) {
     //    return new Date(year, month, 0).getDate()
-   // }
-   // console.log("days in month =", getDaysInMonth(month, year))
-    
+    // }
+    // console.log("days in month =", getDaysInMonth(month, year))
+
     //days in Month Numeric then to string
     let monthNumber = 0;
     for (let i = 1; i < months.length; i++) {
@@ -104,12 +142,10 @@ export default function SearchBar() {
                     data.push(json.serie)
                     setLoading(false)
                 }
-
                 console.log("data :", data)
             }
         }
         fetchData();
-
     }, [month])
 
 
@@ -174,8 +210,8 @@ export default function SearchBar() {
                 <ResponsiveContainer width="100%" aspect={3}>
                     <LineChart
                         width={500}
-                        height={300}
-                        data={data}
+                        height={800}
+                        data={testData}
                         margin={{
                             top: 15,
                             right: 30,
