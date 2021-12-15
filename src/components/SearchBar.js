@@ -140,8 +140,11 @@ export default function SearchBar() {
                 //setChartData(json.serie)
                 if (json.serie) {
                     data.push(json.serie)
+                }
+                if(data.length === 5 ){
                     setLoading(false)
                 }
+
                 console.log("data :", data)
             }
         }
