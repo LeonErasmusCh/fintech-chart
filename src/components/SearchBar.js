@@ -22,11 +22,9 @@ export default function SearchBar() {
     // Loader
     const [loading, setLoading] = useState(true)
     // Day Intervals for fetching data x7
-    let days = [1, 7, 14, 21, 28, 31]
+    let days = [1, 7, 14, 21, 28]
     // Chart Data
-    const [chartData, setChartData] = useState([])
-    // chart data
-    let data = []
+    let chartData = []
     // Set current year in variable and all years in reverse // setYearLimit function sets limit to available data from api(** stating point/date of data and api **)
     let years = [];
     
@@ -72,10 +70,6 @@ export default function SearchBar() {
 
 
 
-
-
-
-
     // onChange to select single MONTH
     function selectMonth(e) {
         setMonth(e.target.value);
@@ -111,6 +105,7 @@ export default function SearchBar() {
     // }
     // console.log("days in month =", getDaysInMonth(month, year))
 
+
     //days in Month Numeric then to string
     let monthNumber = 0;
     for (let i = 1; i < months.length; i++) {
@@ -134,18 +129,18 @@ export default function SearchBar() {
             for (let i = 0; i < days.length; i++) {
                 let response = await fetch(url + "/" + indicator + "/" + days[i] + "-" + monthString + "-" + year);
                 let json = await response.json();
-                //console.log(response)
-                //console.log(json)
-                setChartData([...chartData, json.serie])
-                //setChartData(json.serie)
                 if (json.serie) {
-                    data.push(json.serie)
+                    //console.log("json format ===>", json.serie[0])
+                    chartData.push(json.serie[0])
                 }
-                if(data.length === 5 ){
+                if(chartData.length === 5 ){
                     setLoading(false)
+                    //console.log(data, "--------  data --------")
+                    //console.log(testData, "-----------testData---------")
+                    //console.log(typeof data[0].fecha, ">> typeOf testData")
                 }
 
-                console.log("data :", data)
+                console.log("data :", chartData)
             }
         }
         fetchData();
@@ -153,18 +148,17 @@ export default function SearchBar() {
 
 
 
-    console.log("chartData array", chartData)
-
 
     let testData = [
-        { "fecha": "1 Junio", "valor": 100 },
-        { "fecha": "7 Junio", "valor": 200 },
+        { "fecha": '2018-03-01T03:00:00.000Z', "valor": 100 },
+        { "fecha": '2018-03-07T03:00:00.000Z', "valor": 200 },
         { "fecha": "14 Junio", "valor": 20 },
         { "fecha": "21 Junio", "valor": 150 },
         { "fecha": "28 Junio", "valor": 45 },
         { "fecha": "31 Junio", "valor": 250 }
     ]
 
+    
     return (
         <div>
             <nav className="navbar navbar-light bg-light">
@@ -209,12 +203,12 @@ export default function SearchBar() {
                 </div>
             </nav>
             {/* !monthIndicator && !monthString && !indicator && !days  */}
-            {loading == true || data[0] !== undefined ? <h3 className="m-5">Selecciona el indicicador, año y mes...</h3> :
+            {loading === true || chartData.lenght === 5 || chartData[0] !== undefined ? <h3 className="m-5">Selecciona el indicicador, año y mes...</h3> :
                 <ResponsiveContainer width="100%" aspect={3}>
                     <LineChart
                         width={500}
                         height={800}
-                        data={testData}
+                        data={chartData}
                         margin={{
                             top: 15,
                             right: 30,
