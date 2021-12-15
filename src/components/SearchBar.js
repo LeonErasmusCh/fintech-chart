@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+//import { ResponsiveContainer, AreaChart, XAxis, YAxis, Area, Tooltip, CartesianGrid } from 'recharts';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 
@@ -28,11 +29,13 @@ export default function SearchBar() {
     // Filtered data for Chart
     const [chart, setChart] = useState([])
     // Loader
-    const [loading, setLoading] = useState("Cargando...")
+    const [loading, setLoading] = useState(true)
     // Day Intervals for fetching data x7
-    let days = [7, 14, 21, 28]
+    let days = [1, 7, 14, 21, 28, 31]
     // Chart Data
-    const [data, setData] = useState([])
+    const [chartData, setChartData] = useState([])
+    // chart data
+    let data = []
 
 
     // onChange to select single MONTH
@@ -64,6 +67,12 @@ export default function SearchBar() {
     }, []);
 
 
+    // How many days in month
+    //let getDaysInMonth = function (month, year) {
+    //    return new Date(year, month, 0).getDate()
+   // }
+   // console.log("days in month =", getDaysInMonth(month, year))
+    
     //days in Month Numeric then to string
     let monthNumber = 0;
     for (let i = 1; i < months.length; i++) {
@@ -79,41 +88,43 @@ export default function SearchBar() {
     //Fetch for indicator at given MONTH
     // Date format dd-mm-yyyy
     // Load DATA for chart
+
+    /// Chart data /// 
+
     useEffect(() => {
-        //Fetch for indicator at given MONTH
-        for (let i = 0; i < days.length; i++) {
-            fetch(url + "/" + indicator + "/" + days[i] + "-" + monthString + "-" + year).then(function (response) {
-                return response.json();
-            }).then(function (data) {
-                //console.log("Checking fetch data loop", data)
-                //console.log("fetch string", url + "/" + indicator + "/" + days[i] + "-" + monthString + "-" + year)
-                setMonthIndicator(data)
-                console.log("monthIndicator", monthIndicator)
-                if (days[i] !== undefined) {
-                    setData({ date : days[i] + '/' + monthNumber + '/' + year, price : monthIndicator.serie[0].valor})
+        const fetchData = async () => {
+            for (let i = 0; i < days.length; i++) {
+                let response = await fetch(url + "/" + indicator + "/" + days[i] + "-" + monthString + "-" + year);
+                let json = await response.json();
+                //console.log(response)
+                //console.log(json)
+                setChartData([...chartData, json.serie])
+                //setChartData(json.serie)
+                if (json.serie) {
+                    data.push(json.serie)
+                    setLoading(false)
                 }
 
-            }).catch(function (error) {
-                console.log('Requestfailed', error);
-            });
+                console.log("data :", data)
+            }
         }
+        fetchData();
 
-    }, [month]);
-
-
-    /// Chart data ///
-
-    // How many days in month
-    let getDaysInMonth = function (month, year) {
-        return new Date(year, month, 0).getDate()
-    }
-    console.log("days in month =", getDaysInMonth(month, year))
+    }, [month])
 
 
 
-    console.log("data", data)
-    //console.log("monthIndicator", monthIndicator.serie[0].valor)
+    console.log("chartData array", chartData)
 
+
+    let testData = [
+        { "fecha": "1 Junio", "valor": 100 },
+        { "fecha": "7 Junio", "valor": 200 },
+        { "fecha": "14 Junio", "valor": 20 },
+        { "fecha": "21 Junio", "valor": 150 },
+        { "fecha": "28 Junio", "valor": 45 },
+        { "fecha": "31 Junio", "valor": 250 }
+    ]
 
     return (
         <div>
@@ -158,32 +169,33 @@ export default function SearchBar() {
                     </div>
                 </div>
             </nav>
-
-            {monthIndicator && monthString && indicator && days ? 
+            {/* !monthIndicator && !monthString && !indicator && !days  */}
+            {loading == true || data[0] !== undefined ? <h3 className="m-5">Selecciona el indicicador, año y mes...</h3> :
                 <ResponsiveContainer width="100%" aspect={3}>
-                <LineChart
-                    width={500}
-                    height={300}
-                    data={data}
-                    margin={{
-                        top: 5,
-                        right: 30,
-                        left: 20,
-                        bottom: 5,
-                    }}
-                >
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="months" />
-                    <YAxis dataKey="price" />
-                    <Tooltip />
-                    <Legend />
-                    <Line type="monotone" dataKey={indicator} strokeWidth={2} stroke="#8884d8" activeDot={{ r: 8 }} />
-                </LineChart>
-            </ResponsiveContainer>
-            
-           : "Please select indicator" }
+                    <LineChart
+                        width={500}
+                        height={300}
+                        data={data}
+                        margin={{
+                            top: 15,
+                            right: 30,
+                            left: 20,
+                            bottom: 5,
+                        }}
+                    >
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="fecha" />
+                        <YAxis data="valor" />
+                        <Tooltip />
+                        <Legend />
+                        <Line type="monotone" dataKey="valor" stroke="#8884d8" activeDot={{ r: 8 }} />
+                    </LineChart>
+                </ResponsiveContainer>
+            }
 
-            
+
+
+
         </div>
     )
 }
