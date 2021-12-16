@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 //import { ResponsiveContainer, AreaChart, XAxis, YAxis, Area, Tooltip, CartesianGrid } from 'recharts';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Label } from 'recharts';
 
 
 
@@ -22,9 +22,10 @@ export default function SearchBar() {
     // Loader
     const [loading, setLoading] = useState(true)
     // Day Intervals for fetching data x7
-    let days = [1, 7, 14, 21, 28]
+    const days = [1, 7, 14, 21, 28]
     // Chart Data
-    let chartData = []
+    //const chartData = []
+    const [chartData, setChartData] = useState([])
     // Set current year in variable and all years in reverse // setYearLimit function sets limit to available data from api(** stating point/date of data and api **)
     const [chartLoaded, setchartLoaded] = useState(false)
     // Year limit for API data
@@ -126,22 +127,38 @@ export default function SearchBar() {
 
     //Fetch for indicator at given MONTH
     /// Chart data /// 
-
     const fetchData = async () => {
+        let arr = []
         for (let i = 0; i < days.length; i++) {
             let response = await fetch(url + "/" + indicator + "/" + days[i] + "-" + monthString + "-" + year);
             let json = await response.json();
             if (json.serie) {
-                chartData.push(json.serie[0])
-            }
-            if (chartData.length === 5 && !undefined) {
-                setLoading(false)
+                //chartData.push(json.serie[0])
+                arr.push(json.serie[0])
+                //setChartData(arr);
+                console.log("arr ===>", arr)
+                console.log(arr)
             }
             chartDataIsLoaded();
             console.log("chartData :", chartData)
         }
 
+        breakme: if (arr.hasOwnProperty(!undefined)) {
+            console.log("arr contains undefined value")
+        } else if (arr.length === days.length) {
+            console.log("ARRAY FULL => NOW COPY ENTIRE ARRAY TO chartData")
+            //setChartData(arr);
+            setLoading(false)
+            chartData.push(...arr)
+        } else if (arr.length > days.length ) {
+            console.log("Initiate break")
+            break breakme;
+        }
     }
+
+    useEffect(() => {
+        fetchData();
+    }, [month])
 
 
     //Function for calling value changes on all inputs
@@ -173,8 +190,9 @@ export default function SearchBar() {
         { "fecha": "28 Junio", "valor": 45 },
         { "fecha": "31 Junio", "valor": 250 }
     ]
-    fetchData();
+
     chartDataIsLoaded();
+    console.log("----", chartData)
 
 
     return (
@@ -185,7 +203,7 @@ export default function SearchBar() {
                         {/* Indicator Input */}
                         <label class="input-group-text" for="inputGroupSelect01">Indicador</label>
                         <select class="form-select" id="inputGroupSelect01" onChange={selectIndicator}>
-                        <option selected="true" disabled="disabled">-- Selecciona --</option>
+                            <option selected="true" disabled="disabled">-- Selecciona --</option>
                             {indicators.filter((item) => { return item !== 'version' && item !== 'autor' && item !== 'fecha' }).map((item, key) => {
                                 return (
                                     <>
@@ -198,7 +216,7 @@ export default function SearchBar() {
                         {/* Año Input */}
                         <label class="input-group-text" for="inputGroupSelect01">Año</label>
                         <select class="form-select" id="inputGroupSelect01" onChange={selectYear}>
-                        <option selected="true" disabled="disabled">-- Selecciona --</option>
+                            <option selected="true" disabled="disabled">-- Selecciona --</option>
                             {years.map((year, key) => {
                                 return (
                                     <>
@@ -211,7 +229,7 @@ export default function SearchBar() {
                         {/* Mes Input */}
                         <label class="input-group-text" for="inputGroupSelect01">Mes</label>
                         <select class="form-select" id="inputGroupSelect01" onChange={selectMonth}>
-                        <option selected="true" disabled="disabled">-- Selecciona --</option>
+                            <option selected="true" disabled="disabled">-- Selecciona --</option>
                             {months.map((month, key) => {
                                 return (
                                     <>
@@ -225,12 +243,12 @@ export default function SearchBar() {
             </nav>
             {/*    chartData[0] !== undefined && chartData.length === 5   loading === true &&      : chartData.length > 1 && chartData[0] !== undefined ? <h3 className="m-5">Cargando ...</h3>*/}
 
-            {chartLoaded == false && chartData[0] === undefined ? <h3 className="m-5">Selecciona el indicicador, año y mes...</h3> :
+            {loading == true ? <h3 className="m-5">Selecciona el indicicador, año y mes...</h3> :
                 <ResponsiveContainer width="95%" aspect={2.6}>
                     <LineChart
                         width={500}
                         height={800}
-                        data={testData}
+                        data={chartData}
                         margin={{
                             top: 80,
                             right: 30,
@@ -240,7 +258,7 @@ export default function SearchBar() {
                     >
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="fecha" />
-                        <YAxis data="valor" />
+                        <YAxis dataKey="valor" />
                         <Tooltip />
                         <Legend />
                         <Line type="monotone" dataKey="valor" stroke="#8884d8" activeDot={{ r: 10 }} />
@@ -248,7 +266,7 @@ export default function SearchBar() {
                 </ResponsiveContainer>
 
             }
-           
+
         </div>
     )
 }
