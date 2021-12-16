@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
-//import { ResponsiveContainer, AreaChart, XAxis, YAxis, Area, Tooltip, CartesianGrid } from 'recharts';
+import Error from './Error';
+
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Label } from 'recharts';
 
 
@@ -20,7 +21,7 @@ export default function SearchBar() {
     // Year Selected
     const [year, setYear] = useState("")
     // Loader
-    const [loading, setLoading] = useState(true)
+    const [loading, setLoading] = useState(false)
     // Day Intervals for fetching data x7
     const days = [1, 7, 14, 21, 28]
     // Chart Data
@@ -30,8 +31,20 @@ export default function SearchBar() {
     const [chartLoaded, setchartLoaded] = useState(false)
     // Year limit for API data
     let years = [];
+    //Undefined in chartData
+    const [undefined, setUndefined] = useState(false)
+    // ERROR
+    const [error, setError] = useState(false)
 
 
+    let testData = [
+        { "fecha": '1 Junio', "valor": 100 },
+        { "fecha": '7 Junio', "valor": 800 },
+        { "fecha": "14 Junio", "valor": 20 },
+        { "fecha": "21 Junio", "valor": 150 },
+        { "fecha": "28 Junio", "valor": 45 },
+        { "fecha": "31 Junio", "valor": 250 }
+    ]
 
 
 
@@ -70,10 +83,6 @@ export default function SearchBar() {
     }
     setYearLimit();
 
-    //years.unshift("Selecion") 
-    //months.unshift("Select") 
-    //indicators.unshift("Select") 
-
 
     // onChange to select single MONTH
     function selectMonth(e) {
@@ -91,8 +100,6 @@ export default function SearchBar() {
         console.log("********** Indicator selected ***********", indicator)
     }
 
-
-
     //Fetch for all indicators
     useEffect(() => {
         //Fetch for all indicators
@@ -105,8 +112,7 @@ export default function SearchBar() {
         });
     }, []);
 
-
-    // How many days in month
+    ///////////// How many days in month
     //let getDaysInMonth = function (month, year) {
     //    return new Date(year, month, 0).getDate()
     // }
@@ -131,26 +137,30 @@ export default function SearchBar() {
         let arr = []
         for (let i = 0; i < days.length; i++) {
             let response = await fetch(url + "/" + indicator + "/" + days[i] + "-" + monthString + "-" + year);
+            setLoading(true);
             let json = await response.json();
-            if (json.serie) {
-                //chartData.push(json.serie[0])
+            if (json.error) {
+                console.log(json.error)
+                setLoading(false)
+            } else if (json.serie) {
+                setLoading(false)
                 arr.push(json.serie[0])
-                //setChartData(arr);
                 console.log("arr ===>", arr)
                 console.log(arr)
             }
-            chartDataIsLoaded();
             console.log("chartData :", chartData)
+            setLoading(false);
         }
 
         breakme: if (arr.hasOwnProperty(!undefined)) {
             console.log("arr contains undefined value")
         } else if (arr.length === days.length) {
             console.log("ARRAY FULL => NOW COPY ENTIRE ARRAY TO chartData")
-            //setChartData(arr);
-            setLoading(false)
             chartData.push(...arr)
-        } else if (arr.length > days.length ) {
+            handleUndefined();
+            chartDataIsLoaded();
+            minValue();
+        } else if (arr.length > days.length) {
             console.log("Initiate break")
             break breakme;
         }
@@ -158,41 +168,45 @@ export default function SearchBar() {
 
     useEffect(() => {
         fetchData();
-    }, [month])
+    }, [month, year, indicator])
 
 
-    //Function for calling value changes on all inputs
-    //function valueChange(e) {
-    //selectMonth(e);
-    //selectYear(e);
-    // selectIndicator(e);
-    //fetchData();
-    //chartDataIsLoaded();
-    //}
-
-    // Check if chartData is loaded
     function chartDataIsLoaded() {
-        if (chartData.length === 5 && chartData !== undefined) {
+        // Check if chartData is loaded 
+        if (chartData.length === days.length) {
             setchartLoaded(true)
+            setLoading(false)
+        } else if (!chartLoaded) {
+            setLoading(false)
         } else {
-            console.log("(error, data not loaded) chartLoaded:", chartLoaded)
+            console.log("Status chartLoaded:", chartLoaded)
         }
     }
     //console.log("chart fully loaded with data", chartLoaded)
 
+    //check chartData for Undefined
+    function handleUndefined() {
+        if (chartData.includes(undefined)) {
+            console.log("FOUND AN UNDEFINED")
+            setUndefined(true)
+        }
+    }
 
+    // get min value from ChartData array
+    let minimumValue = []
+    let values = []
+    function minValue() {
+        chartData.forEach((value) => {
+            console.log("ELEMENT", value.valor)
+            values.push(Math.min(value.valor))
+        });
+        console.log("VALUES", values)
+        const min = Math.min(...values)
+        minimumValue.push(min);
+        console.log("MIN VALUE", min)
 
-    let testData = [
-        { "fecha": '1 Junio', "valor": 100 },
-        { "fecha": '7 Junio', "valor": 800 },
-        { "fecha": "14 Junio", "valor": 20 },
-        { "fecha": "21 Junio", "valor": 150 },
-        { "fecha": "28 Junio", "valor": 45 },
-        { "fecha": "31 Junio", "valor": 250 }
-    ]
-
-    chartDataIsLoaded();
-    console.log("----", chartData)
+    }
+    console.log('minimumValue', minimumValue)
 
 
     return (
@@ -241,9 +255,38 @@ export default function SearchBar() {
                     </div>
                 </div>
             </nav>
-            {/*    chartData[0] !== undefined && chartData.length === 5   loading === true &&      : chartData.length > 1 && chartData[0] !== undefined ? <h3 className="m-5">Cargando ...</h3>*/}
 
-            {loading == true ? <h3 className="m-5">Selecciona el indicicador, año y mes...</h3> :
+            {!chartLoaded && (<h3 className="m-5 text-secondary">Selecciona el indicicador, año y mes...</h3>)}
+            {loading ? (<p className="m-3 text-secondary">Cargando...</p>) : ""}
+            {undefined && (<Error />)}
+            {chartLoaded && (
+                <ResponsiveContainer width="95%" aspect={2.6}>
+                    <LineChart
+                        width={500}
+                        height={800}
+                        data={chartData}
+                        margin={{
+                            top: 80,
+                            right: 30,
+                            left: 20,
+                            bottom: 5,
+                        }}
+                    >
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="fecha" />
+                        <YAxis dataKey="valor" />
+                        <Tooltip />
+                        <Legend />
+                        <Line type="monotone" dataKey="valor" stroke="#8884d8" activeDot={{ r: 10 }} />
+                    </LineChart>
+                </ResponsiveContainer>
+            )}
+
+
+
+
+            {/*         
+            {loading == true ? <h3 className="m-5 text-secondary">Selecciona el indicicador, año y mes...</h3> :
                 <ResponsiveContainer width="95%" aspect={2.6}>
                     <LineChart
                         width={500}
@@ -266,7 +309,7 @@ export default function SearchBar() {
                 </ResponsiveContainer>
 
             }
-
+*/}
         </div>
     )
 }
