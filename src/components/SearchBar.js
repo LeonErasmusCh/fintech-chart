@@ -26,40 +26,41 @@ export default function SearchBar() {
     // Chart Data
     let chartData = []
     // Set current year in variable and all years in reverse // setYearLimit function sets limit to available data from api(** stating point/date of data and api **)
+    const [chartLoaded, setchartLoaded] = useState(false)
+    // Year limit for API data
     let years = [];
-    
-    let thisYear = new Date().getFullYear()
-    
-    //for (let i = thisYear; i > 1976; i--) {
-    //    years.push(i);
-    //}
 
+
+
+
+
+    let thisYear = new Date().getFullYear()
     let limit = 1977
     function setYearLimit() {
         for (let i = thisYear; i >= limit; i--) {
-            if (indicator ==="uf") {
-                 limit = 1977
+            if (indicator === "uf") {
+                limit = 1977
             } else if (indicator === "ivp") {
                 limit = 1990
-            } else if (indicator === "dolar"){
+            } else if (indicator === "dolar") {
                 limit = 1984
-            } else if (indicator === "dolar_intercambio"){
+            } else if (indicator === "dolar_intercambio") {
                 limit = 1988
-            } else if (indicator === "euro"){
+            } else if (indicator === "euro") {
                 limit = 1999
-            } else if (indicator === "ipc"){
+            } else if (indicator === "ipc") {
                 limit = 1928
-            } else if (indicator === "utm"){
+            } else if (indicator === "utm") {
                 limit = 1990
-            } else if (indicator === "imacec"){
+            } else if (indicator === "imacec") {
                 limit = 1990
-            } else if (indicator === "tpm"){
+            } else if (indicator === "tpm") {
                 limit = 1977
-            } else if (indicator === "libra_cobre"){
+            } else if (indicator === "libra_cobre") {
                 limit = 2012
-            } else if (indicator === "tasa_desempleo"){
+            } else if (indicator === "tasa_desempleo") {
                 limit = 2009
-            } else if (indicator === "bitcoin"){
+            } else if (indicator === "bitcoin") {
                 limit = 2009
             }
             years.push(i)
@@ -68,6 +69,9 @@ export default function SearchBar() {
     }
     setYearLimit();
 
+    //years.unshift("Selecion") 
+    //months.unshift("Select") 
+    //indicators.unshift("Select") 
 
 
     // onChange to select single MONTH
@@ -85,6 +89,8 @@ export default function SearchBar() {
         setIndicator(e.target.value);
         console.log("********** Indicator selected ***********", indicator)
     }
+
+
 
     //Fetch for all indicators
     useEffect(() => {
@@ -119,54 +125,67 @@ export default function SearchBar() {
 
 
     //Fetch for indicator at given MONTH
-    // Date format dd-mm-yyyy
-    // Load DATA for chart
-
     /// Chart data /// 
 
-    useEffect(() => {
-        const fetchData = async () => {
-            for (let i = 0; i < days.length; i++) {
-                let response = await fetch(url + "/" + indicator + "/" + days[i] + "-" + monthString + "-" + year);
-                let json = await response.json();
-                if (json.serie) {
-                    //console.log("json format ===>", json.serie[0])
-                    chartData.push(json.serie[0])
-                }
-                if(chartData.length === 5 ){
-                    setLoading(false)
-                    //console.log(data, "--------  data --------")
-                    //console.log(testData, "-----------testData---------")
-                    //console.log(typeof data[0].fecha, ">> typeOf testData")
-                }
-
-                console.log("data :", chartData)
+    const fetchData = async () => {
+        for (let i = 0; i < days.length; i++) {
+            let response = await fetch(url + "/" + indicator + "/" + days[i] + "-" + monthString + "-" + year);
+            let json = await response.json();
+            if (json.serie) {
+                chartData.push(json.serie[0])
             }
+            if (chartData.length === 5 && !undefined) {
+                setLoading(false)
+            }
+            chartDataIsLoaded();
+            console.log("chartData :", chartData)
         }
-        fetchData();
-    }, [month])
 
+    }
+
+
+    //Function for calling value changes on all inputs
+    //function valueChange(e) {
+    //selectMonth(e);
+    //selectYear(e);
+    // selectIndicator(e);
+    //fetchData();
+    //chartDataIsLoaded();
+    //}
+
+    // Check if chartData is loaded
+    function chartDataIsLoaded() {
+        if (chartData.length === 5 && chartData !== undefined) {
+            setchartLoaded(true)
+        } else {
+            console.log("(error, data not loaded) chartLoaded:", chartLoaded)
+        }
+    }
+    //console.log("chart fully loaded with data", chartLoaded)
 
 
 
     let testData = [
-        { "fecha": '2018-03-01T03:00:00.000Z', "valor": 100 },
-        { "fecha": '2018-03-07T03:00:00.000Z', "valor": 200 },
+        { "fecha": '1 Junio', "valor": 100 },
+        { "fecha": '7 Junio', "valor": 800 },
         { "fecha": "14 Junio", "valor": 20 },
         { "fecha": "21 Junio", "valor": 150 },
         { "fecha": "28 Junio", "valor": 45 },
         { "fecha": "31 Junio", "valor": 250 }
     ]
+    fetchData();
+    chartDataIsLoaded();
 
-    
+
     return (
         <div>
-            <nav className="navbar navbar-light bg-light">
+            <nav className="navbar main-navigation ">
                 <div className="container-fluid m-3">
                     <div class="input-group mb-3">
                         {/* Indicator Input */}
                         <label class="input-group-text" for="inputGroupSelect01">Indicador</label>
                         <select class="form-select" id="inputGroupSelect01" onChange={selectIndicator}>
+                        <option selected="true" disabled="disabled">-- Selecciona --</option>
                             {indicators.filter((item) => { return item !== 'version' && item !== 'autor' && item !== 'fecha' }).map((item, key) => {
                                 return (
                                     <>
@@ -179,6 +198,7 @@ export default function SearchBar() {
                         {/* Año Input */}
                         <label class="input-group-text" for="inputGroupSelect01">Año</label>
                         <select class="form-select" id="inputGroupSelect01" onChange={selectYear}>
+                        <option selected="true" disabled="disabled">-- Selecciona --</option>
                             {years.map((year, key) => {
                                 return (
                                     <>
@@ -191,6 +211,7 @@ export default function SearchBar() {
                         {/* Mes Input */}
                         <label class="input-group-text" for="inputGroupSelect01">Mes</label>
                         <select class="form-select" id="inputGroupSelect01" onChange={selectMonth}>
+                        <option selected="true" disabled="disabled">-- Selecciona --</option>
                             {months.map((month, key) => {
                                 return (
                                     <>
@@ -202,15 +223,16 @@ export default function SearchBar() {
                     </div>
                 </div>
             </nav>
-            {/* !monthIndicator && !monthString && !indicator && !days  */}
-            {loading === true || chartData.lenght === 5 || chartData[0] !== undefined ? <h3 className="m-5">Selecciona el indicicador, año y mes...</h3> :
-                <ResponsiveContainer width="100%" aspect={3}>
+            {/*    chartData[0] !== undefined && chartData.length === 5   loading === true &&      : chartData.length > 1 && chartData[0] !== undefined ? <h3 className="m-5">Cargando ...</h3>*/}
+
+            {chartLoaded == false && chartData[0] === undefined ? <h3 className="m-5">Selecciona el indicicador, año y mes...</h3> :
+                <ResponsiveContainer width="95%" aspect={2.6}>
                     <LineChart
                         width={500}
                         height={800}
-                        data={chartData}
+                        data={testData}
                         margin={{
-                            top: 15,
+                            top: 80,
                             right: 30,
                             left: 20,
                             bottom: 5,
@@ -221,14 +243,12 @@ export default function SearchBar() {
                         <YAxis data="valor" />
                         <Tooltip />
                         <Legend />
-                        <Line type="monotone" dataKey="valor" stroke="#8884d8" activeDot={{ r: 8 }} />
+                        <Line type="monotone" dataKey="valor" stroke="#8884d8" activeDot={{ r: 10 }} />
                     </LineChart>
                 </ResponsiveContainer>
+
             }
-
-
-
-
+           
         </div>
     )
 }
