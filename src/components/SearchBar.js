@@ -159,7 +159,7 @@ export default function SearchBar() {
             chartData.push(...arr)
             handleUndefined();
             chartDataIsLoaded();
-            minValue();
+            //minValue();
         } else if (arr.length > days.length) {
             console.log("Initiate break")
             break breakme;
@@ -191,7 +191,7 @@ export default function SearchBar() {
             setUndefined(true)
         }
     }
-
+{/** 
     // get min value from ChartData array
     let minimumValue = []
     let values = []
@@ -207,6 +207,9 @@ export default function SearchBar() {
 
     }
     console.log('minimumValue', minimumValue)
+*/}
+
+
 
 
     return (
@@ -260,28 +263,36 @@ export default function SearchBar() {
             {loading ? (<p className="m-3 text-secondary">Cargando...</p>) : ""}
             {undefined && (<Error />)}
             {chartLoaded && (
-                <ResponsiveContainer width="95%" aspect={2.6}>
+                <ResponsiveContainer width="90%" aspect={2.6}>
                     <LineChart
                         width={500}
                         height={800}
                         data={chartData}
                         margin={{
                             top: 80,
-                            right: 30,
-                            left: 20,
+                            right: 50,
+                            left: 50,
                             bottom: 5,
                         }}
+                        
                     >
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="fecha" />
-                        <YAxis dataKey="valor" />
+                        <CartesianGrid strokeDasharray="5 5" opacity={0.8} vertical={false}/>
+                        <XAxis 
+                        dataKey="fecha"
+                        tickFormatter={(date) => date.substr(0,10)}
+                        />
+                        <YAxis 
+                        dataKey="valor"
+                        tickFormatter={(number) => `$${number.toFixed(0)}`}
+                        domain={[400]}
+                        />
                         <Tooltip />
                         <Legend />
-                        <Line type="monotone" dataKey="valor" stroke="#8884d8" activeDot={{ r: 10 }} />
+                        <Line type="monotone" dataKey="valor" stroke="#8884d8" strokeWidth={5} activeDot={{ r: 10 }} />
                     </LineChart>
                 </ResponsiveContainer>
             )}
-
+            {}
 
 
 
