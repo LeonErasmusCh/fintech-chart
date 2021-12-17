@@ -3,7 +3,7 @@ import React from 'react'
 function Error() {
     return (
         <div>
-            <p class="fs-1">Oops... Error</p>
+            <p class="text-danger">Oops... Error del servidor, por favor selecciona un otro campo</p>
         </div>
     )
 }

@@ -86,17 +86,23 @@ export default function SearchBar() {
 
     // onChange to select single MONTH
     function selectMonth(e) {
+        //e.preventDefault()
         setMonth(e.target.value);
+        fetchData();
         console.log("********** month selected ***********", month)
     }
     // onChange to select YEAR
     function selectYear(e) {
+        //e.preventDefault()
         setYear(e.target.value);
+        fetchData();
         console.log("********** Year selected ***********", year)
     }
     // onChange to select INDICATOR
     function selectIndicator(e) {
+       // e.preventDefault()
         setIndicator(e.target.value);
+        fetchData();
         console.log("********** Indicator selected ***********", indicator)
     }
 
@@ -139,36 +145,42 @@ export default function SearchBar() {
             let response = await fetch(url + "/" + indicator + "/" + days[i] + "-" + monthString + "-" + year);
             setLoading(true);
             let json = await response.json();
-            if (json.error) {
-                console.log(json.error)
-                setLoading(false)
+            if (json.error === '500 Internal Server Error') {
+                console.log(json.error )
+                setError(true)
+                //setLoading(false)
+            } else if(undefined){
+                arr.filter(( element ) => {return element !== undefined});
+                setError(true)
             } else if (json.serie) {
+                setError(false)
                 setLoading(false)
-                arr.push(json.serie[0])
+                    //check chartData for Undefined
+                arr.unshift(json.serie[0])
                 console.log("arr ===>", arr)
                 console.log(arr)
             }
             console.log("chartData :", chartData)
-            setLoading(false);
         }
 
         breakme: if (arr.hasOwnProperty(!undefined)) {
             console.log("arr contains undefined value")
+            reload();
         } else if (arr.length === days.length) {
             console.log("ARRAY FULL => NOW COPY ENTIRE ARRAY TO chartData")
-            chartData.push(...arr)
-            handleUndefined();
+            chartData.unshift(...arr)
             chartDataIsLoaded();
             //minValue();
         } else if (arr.length > days.length) {
             console.log("Initiate break")
+            reload();
             break breakme;
         }
     }
 
-    useEffect(() => {
-        fetchData();
-    }, [month, year, indicator])
+    //useEffect(() => {
+    //    fetchData();
+    //}, [month, year, indicator])
 
 
     function chartDataIsLoaded() {
@@ -184,14 +196,13 @@ export default function SearchBar() {
     }
     //console.log("chart fully loaded with data", chartLoaded)
 
-    //check chartData for Undefined
-    function handleUndefined() {
-        if (chartData.includes(undefined)) {
-            console.log("FOUND AN UNDEFINED")
-            setUndefined(true)
-        }
+    //Reload page after error
+    function reload() {
+        window.location.reload();
     }
-{/** 
+
+
+    {/** 
     // get min value from ChartData array
     let minimumValue = []
     let values = []
@@ -261,7 +272,7 @@ export default function SearchBar() {
 
             {!chartLoaded && (<h3 className="m-5 text-secondary">Selecciona el indicicador, año y mes...</h3>)}
             {loading ? (<p className="m-3 text-secondary">Cargando...</p>) : ""}
-            {undefined && (<Error />)}
+            {error && (<Error />)}  
             {chartLoaded && (
                 <ResponsiveContainer width="90%" aspect={2.6}>
                     <LineChart
@@ -274,17 +285,17 @@ export default function SearchBar() {
                             left: 50,
                             bottom: 5,
                         }}
-                        
+
                     >
-                        <CartesianGrid strokeDasharray="5 5" opacity={0.8} vertical={false}/>
-                        <XAxis 
-                        dataKey="fecha"
-                        tickFormatter={(date) => date.substr(0,10)}
+                        <CartesianGrid strokeDasharray="5 5" opacity={0.8} vertical={false} />
+                        <XAxis
+                            dataKey="fecha"
+                            tickFormatter={(date) => date.substr(0, 10)}
                         />
-                        <YAxis 
-                        dataKey="valor"
-                        tickFormatter={(number) => `$${number.toFixed(0)}`}
-                        domain={[400]}
+                        <YAxis
+                            dataKey="valor"
+                            tickFormatter={(number) => `$${number.toFixed(0)}`}
+                            domain={[1000]}
                         />
                         <Tooltip />
                         <Legend />
@@ -292,35 +303,8 @@ export default function SearchBar() {
                     </LineChart>
                 </ResponsiveContainer>
             )}
-            {}
+     
 
-
-
-            {/*         
-            {loading == true ? <h3 className="m-5 text-secondary">Selecciona el indicicador, año y mes...</h3> :
-                <ResponsiveContainer width="95%" aspect={2.6}>
-                    <LineChart
-                        width={500}
-                        height={800}
-                        data={chartData}
-                        margin={{
-                            top: 80,
-                            right: 30,
-                            left: 20,
-                            bottom: 5,
-                        }}
-                    >
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="fecha" />
-                        <YAxis dataKey="valor" />
-                        <Tooltip />
-                        <Legend />
-                        <Line type="monotone" dataKey="valor" stroke="#8884d8" activeDot={{ r: 10 }} />
-                    </LineChart>
-                </ResponsiveContainer>
-
-            }
-*/}
         </div>
     )
 }
