@@ -37,17 +37,6 @@ export default function SearchBar() {
     const [error, setError] = useState(false)
 
 
-    let testData = [
-        { "fecha": '1 Junio', "valor": 100 },
-        { "fecha": '7 Junio', "valor": 800 },
-        { "fecha": "14 Junio", "valor": 20 },
-        { "fecha": "21 Junio", "valor": 150 },
-        { "fecha": "28 Junio", "valor": 45 },
-        { "fecha": "31 Junio", "valor": 250 }
-    ]
-
-
-
     let thisYear = new Date().getFullYear()
     let limit = 1977
     function setYearLimit() {
@@ -84,27 +73,153 @@ export default function SearchBar() {
     setYearLimit();
 
 
+    /******************  WORKING ***********************/
+    // onChange to select YEAR
+    const yearString = []
+
+    function selectYear(e) {
+        setYear(e.target.value);
+    }
+
+    function setYearToString() {
+        for (let i = 1; i < years.length; i++) {
+            if (years[i] == year && !null) {
+                yearString.push(year)
+                console.log(yearString)
+            }
+        }
+    }
+
+    useEffect(() => {
+        setYearToString();
+    }, [indicator, month, year])
+
+
+    // *************** WORKING *******************/
+
     // onChange to select single MONTH
     function selectMonth(e) {
-        //e.preventDefault()
         setMonth(e.target.value);
-        fetchData();
-        console.log("********** month selected ***********", month)
+        console.log("monthNumber", monthNumber)
+
     }
-    // onChange to select YEAR
-    function selectYear(e) {
-        //e.preventDefault()
-        setYear(e.target.value);
-        fetchData();
-        console.log("********** Year selected ***********", year)
+
+    const monthString = []
+
+    let monthNumber = 0;
+    function setMonthArray() {
+        for (let i = 0; i < months.length; i++) {
+            if (months[i] === month && !null) {
+                monthNumber += i + 1
+                monthString.push(monthNumber.toString())
+            }
+        }
+        console.log(monthString)
     }
+
+    useEffect(() => {
+        setMonthArray();
+    }, [indicator, month, year])
+
+    /***************  WORKING  *******************/
+
     // onChange to select INDICATOR
+    const indicatorString = []
+
     function selectIndicator(e) {
-       // e.preventDefault()
         setIndicator(e.target.value);
-        fetchData();
-        console.log("********** Indicator selected ***********", indicator)
     }
+
+    function setIndicatorString() {
+        indicatorString.push(indicator)
+    }
+
+    useEffect(() => {
+        setIndicatorString();
+    }, [indicator, month, year])
+
+
+    /**************** FETCH => CHECK URL FOR FULL DATE =>  *****************/
+
+    // set DATE for fetch parameter
+    let fetchDate = []
+    function urlCreateDate() {
+        if (monthString !== null || yearString !== null) {
+            for (let i = 0; i < days.length; i++) {
+                fetchDate.push(days[i] + "-" + monthString[0] + "-" + yearString[0])
+                console.log("fetchDate array: ", fetchDate)
+            }
+        }
+    }
+
+    useEffect(() => {
+        urlCreateDate();
+
+    }, [month, year, indicator])
+
+    // *********************** Fetch urlArray ******************************/
+    let data = []
+    let urlArray = []
+
+    function createUrls() {
+        for (let i = 0; i < fetchDate.length; i++) {
+            console.log('i', url + "/" + indicatorString + "/" + fetchDate[i])
+            urlArray.push(url + "/" + indicatorString + "/" + fetchDate[i])
+            console.log("urlArray", urlArray)
+        }
+
+    }
+    useEffect(() => {
+        createUrls();
+    }, [month, year, indicator])
+
+
+    /// Do fetch at date
+    async function fetchAll() {
+        setLoading(true)
+        setchartLoaded(false)
+        let requests = await urlArray.map(url => fetch(url));
+        Promise.all(requests)
+        .then(responses => {
+            // all responses are resolved successfully
+            for (let response of responses) {
+                console.log(`${response.url}: ${response.status}`); // shows 200 for every url
+                
+            }
+            
+            return responses;
+        })
+        // map array of responses into an array of response.json() to read their content
+        .then(responses => Promise.all(responses.map(r => r.json())))
+        // all JSON answers are parsed
+        .then(endpoint => endpoint.forEach((response, index, array) => {
+                if (response.error > 200) {
+                    console.log("error", error)
+                    
+                } else {
+                    data.filter(n => n)
+                    console.log("array", array[index].serie);
+                    data.unshift(array[index].serie)
+                    
+                    let data2 = data.flat()
+                    console.log(data2, "<========== DATA FLATTENED")
+                    chartData.unshift(...data2)
+                    chartData.splice(5)
+                    setchartLoaded(true)
+                    setLoading(false)
+                }
+                 console.log("chartdata :", chartData)
+            }
+            ));
+        
+    }
+
+    useEffect(() => {
+        chartDataIsLoaded();
+        fetchAll();
+    }, [month, year, indicator])
+
+
 
     //Fetch for all indicators
     useEffect(() => {
@@ -125,130 +240,37 @@ export default function SearchBar() {
     // console.log("days in month =", getDaysInMonth(month, year))
 
 
-    //days in Month Numeric then to string
-    let monthNumber = 0;
-    for (let i = 1; i < months.length; i++) {
-        if (months[i] === month) {
-            monthNumber += i + 1
-        }
-    }
-    let monthString = monthNumber.toString()
-    console.log("monthNumber", monthNumber)
-    console.log("monthString", monthString)
-
-
-    //Fetch for indicator at given MONTH
-    /// Chart data /// 
-    const fetchData = async () => {
-        let arr = []
-        for (let i = 0; i < days.length; i++) {
-            let response = await fetch(url + "/" + indicator + "/" + days[i] + "-" + monthString + "-" + year);
-            setLoading(true);
-            let json = await response.json();
-            if (json.error === '500 Internal Server Error') {
-                console.log(json.error )
-                setError(true)
-                //setLoading(false)
-            } else if(undefined){
-                arr.filter(( element ) => {return element !== undefined});
-                setError(true)
-            } else if (json.serie) {
-                setError(false)
-                setLoading(false)
-                    //check chartData for Undefined
-                arr.unshift(json.serie[0])
-                console.log("arr ===>", arr)
-                console.log(arr)
-            }
-            console.log("chartData :", chartData)
-        }
-
-        breakme: if (arr.hasOwnProperty(!undefined)) {
-            console.log("arr contains undefined value")
-            reload();
-        } else if (arr.length === days.length) {
-            console.log("ARRAY FULL => NOW COPY ENTIRE ARRAY TO chartData")
-            chartData.unshift(...arr)
-            chartDataIsLoaded();
-            //minValue();
-        } else if (arr.length > days.length) {
-            console.log("Initiate break")
-            reload();
-            break breakme;
-        }
-    }
-
-    //useEffect(() => {
-    //    fetchData();
-    //}, [month, year, indicator])
-
-
     function chartDataIsLoaded() {
         // Check if chartData is loaded 
         if (chartData.length === days.length) {
-            setchartLoaded(true)
-            setLoading(false)
+            //setchartLoaded(false)
+            //setLoading(false)
         } else if (!chartLoaded) {
-            setLoading(false)
+            //setLoading(false)
         } else {
             console.log("Status chartLoaded:", chartLoaded)
         }
     }
-    //console.log("chart fully loaded with data", chartLoaded)
 
-    //Reload page after error
-    function reload() {
-        window.location.reload();
-    }
-
-
-    {/** 
-    // get min value from ChartData array
-    let minimumValue = []
-    let values = []
-    function minValue() {
-        chartData.forEach((value) => {
-            console.log("ELEMENT", value.valor)
-            values.push(Math.min(value.valor))
-        });
-        console.log("VALUES", values)
-        const min = Math.min(...values)
-        minimumValue.push(min);
-        console.log("MIN VALUE", min)
-
-    }
-    console.log('minimumValue', minimumValue)
-*/}
-
-
+    console.log("chart fully loaded with data", chartLoaded)
+    console.log("Chatrdata: ", chartData)
 
 
     return (
         <div>
             <nav className="navbar main-navigation ">
                 <div className="container-fluid m-3">
+
+                    
                     <div class="input-group mb-3">
                         {/* Indicator Input */}
-                        <label class="input-group-text" for="inputGroupSelect01">Indicador</label>
+                        <label class="input-group-text " for="inputGroupSelect01">Indicador</label>
                         <select class="form-select" id="inputGroupSelect01" onChange={selectIndicator}>
                             <option selected="true" disabled="disabled">-- Selecciona --</option>
                             {indicators.filter((item) => { return item !== 'version' && item !== 'autor' && item !== 'fecha' }).map((item, key) => {
                                 return (
                                     <>
                                         <option value={item} key={{ key }}>{item}</option>
-                                    </>
-                                )
-                            })}
-                        </select>
-
-                        {/* Año Input */}
-                        <label class="input-group-text" for="inputGroupSelect01">Año</label>
-                        <select class="form-select" id="inputGroupSelect01" onChange={selectYear}>
-                            <option selected="true" disabled="disabled">-- Selecciona --</option>
-                            {years.map((year, key) => {
-                                return (
-                                    <>
-                                        <option value={year} key={{ key }}>{year}</option>
                                     </>
                                 )
                             })}
@@ -266,13 +288,27 @@ export default function SearchBar() {
                                 )
                             })}
                         </select>
+
+                        {/* Año Input */}
+                        <label class="input-group-text" for="inputGroupSelect01">Año</label>
+                        <select class="form-select" id="inputGroupSelect01" onChange={selectYear}>
+                            <option selected="true" disabled="disabled">-- Selecciona --</option>
+                            {years.map((year, key) => {
+                                return (
+                                    <>
+                                        <option value={year} key={{ key }}>{year}</option>
+                                    </>
+                                )
+                            })}
+                        </select>
                     </div>
                 </div>
             </nav>
 
-            {!chartLoaded && (<h3 className="m-5 text-secondary">Selecciona el indicicador, año y mes...</h3>)}
+            {!chartLoaded && (<h3 className="m-5 text-white">Selecciona el indicicador, año y mes...</h3>)}
             {loading ? (<p className="m-3 text-secondary">Cargando...</p>) : ""}
-            {error && (<Error />)}  
+            {error && (<Error />)}
+            {/* */}
             {chartLoaded && (
                 <ResponsiveContainer width="90%" aspect={2.6}>
                     <LineChart
@@ -294,7 +330,7 @@ export default function SearchBar() {
                         />
                         <YAxis
                             dataKey="valor"
-                            tickFormatter={(number) => `$${number.toFixed(0)}`}
+                            tickFormatter={(number) => `$${number.toFixed(2)}`}
                             domain={[1000]}
                         />
                         <Tooltip />
@@ -303,7 +339,7 @@ export default function SearchBar() {
                     </LineChart>
                 </ResponsiveContainer>
             )}
-     
+
 
         </div>
     )
