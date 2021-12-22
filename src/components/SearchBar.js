@@ -85,7 +85,6 @@ export default function SearchBar() {
         for (let i = 1; i < years.length; i++) {
             if (years[i] == year && !null) {
                 yearString.push(year)
-                console.log(yearString)
             }
         }
     }
@@ -119,6 +118,7 @@ export default function SearchBar() {
 
     useEffect(() => {
         setMonthArray();
+
     }, [indicator, month, year])
 
     /***************  WORKING  *******************/
@@ -155,7 +155,7 @@ export default function SearchBar() {
     useEffect(() => {
         urlCreateDate();
 
-    }, [month, year, indicator])
+    })
 
     // *********************** Fetch urlArray ******************************/
     let data = []
@@ -180,42 +180,60 @@ export default function SearchBar() {
         setchartLoaded(false)
         let requests = await urlArray.map(url => fetch(url));
         Promise.all(requests)
-        .then(responses => {
-            // all responses are resolved successfully
-            for (let response of responses) {
-                console.log(`${response.url}: ${response.status}`); // shows 200 for every url
-                
-            }
-            
-            return responses;
-        })
-        // map array of responses into an array of response.json() to read their content
-        .then(responses => Promise.all(responses.map(r => r.json())))
-        // all JSON answers are parsed
-        .then(endpoint => endpoint.forEach((response, index, array) => {
+            .then(responses => {
+                // all responses are resolved successfully
+                for (let response of responses) {
+                    console.log(`${response.url}: ${response.status}`); // shows 200 for every url
+                    
+                }
+
+                return responses;
+            })
+            // map array of responses into an array of response.json() to read their content
+            .then(responses => Promise.all(responses.map(r => r.json())))
+            // all JSON answers are parsed
+            .then(endpoint => endpoint.forEach((response, index, array) => {
                 if (response.error > 200) {
                     console.log("error", error)
-                    
+                    setError(true)
                 } else {
-                    data.filter(n => n)
+                    //data.filter(n => n !== 'undefined')
+
                     console.log("array", array[index].serie);
                     data.unshift(array[index].serie)
-                    
-                    let data2 = data.flat()
+                       
+                    const filter = data.filter((x) => x !== "undefined")
+                    console.log("filter", filter);
+
+                    console.log("CHECK",filter)
+
+                    let data2 = filter.flat().reverse()
                     console.log(data2, "<========== DATA FLATTENED")
+
                     chartData.unshift(...data2)
                     chartData.splice(5)
-                    setchartLoaded(true)
+
+                    chartLoader();
                     setLoading(false)
+                    
                 }
-                 console.log("chartdata :", chartData)
+                console.log("chartdata :", chartData)
             }
             ));
+            
+    }
+
+    function chartLoader(){
+        if(chartData.length > 0){
+            setchartLoaded(true);
+        } else if (chartData.length < 5){
+            setLoading(false)
         
+        }
     }
 
     useEffect(() => {
-        chartDataIsLoaded();
+       //chartDataIsLoaded();
         fetchAll();
     }, [month, year, indicator])
 
@@ -231,7 +249,12 @@ export default function SearchBar() {
         }).catch(function (error) {
             console.log('Requestfailed', error);
         });
+
+        //setLoading(true)
+        //setchartLoaded(false)
     }, []);
+
+
 
     ///////////// How many days in month
     //let getDaysInMonth = function (month, year) {
@@ -239,21 +262,10 @@ export default function SearchBar() {
     // }
     // console.log("days in month =", getDaysInMonth(month, year))
 
-
-    function chartDataIsLoaded() {
-        // Check if chartData is loaded 
-        if (chartData.length === days.length) {
-            //setchartLoaded(false)
-            //setLoading(false)
-        } else if (!chartLoaded) {
-            //setLoading(false)
-        } else {
-            console.log("Status chartLoaded:", chartLoaded)
-        }
-    }
-
     console.log("chart fully loaded with data", chartLoaded)
-    console.log("Chatrdata: ", chartData)
+    console.log("Chartdata: ", chartData)
+    ///console.log("typeof chartData", typeof chartData)
+
 
 
     return (
@@ -261,7 +273,7 @@ export default function SearchBar() {
             <nav className="navbar main-navigation ">
                 <div className="container-fluid m-3">
 
-                    
+
                     <div class="input-group mb-3">
                         {/* Indicator Input */}
                         <label class="input-group-text " for="inputGroupSelect01">Indicador</label>
@@ -305,7 +317,7 @@ export default function SearchBar() {
                 </div>
             </nav>
 
-            {!chartLoaded && (<h3 className="m-5 text-white">Selecciona el indicicador, año y mes...</h3>)}
+            {!chartLoaded && (<h3 className="m-5 text-secondary">Selecciona el indicicador, año y mes...</h3>)}
             {loading ? (<p className="m-3 text-secondary">Cargando...</p>) : ""}
             {error && (<Error />)}
             {/* */}
@@ -326,12 +338,12 @@ export default function SearchBar() {
                         <CartesianGrid strokeDasharray="5 5" opacity={0.8} vertical={false} />
                         <XAxis
                             dataKey="fecha"
-                            tickFormatter={(date) => date.substr(0, 10)}
+                            tickFormatter={(fecha) => fecha.substr(0, 10)}
                         />
                         <YAxis
                             dataKey="valor"
                             tickFormatter={(number) => `$${number.toFixed(2)}`}
-                            domain={[1000]}
+                            domain={[]}
                         />
                         <Tooltip />
                         <Legend />
