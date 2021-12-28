@@ -9,32 +9,36 @@ export default function SearchBar() {
 
     const url = "https://mindicador.cl/api";
 
+    const [fetchByYear, setFetchByYear] = useState([])
 
     // Initial Indicators values set with Fetch from api
     const [indicators, setIndicators] = useState([])
     // Indicator selected
     const [indicator, setIndicator] = useState([])
+    const [indicatorBool, setIndicatorBool] = useState(false)
     // Initial Month for select field
     const [months, setMonths] = useState(["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"])
     // Month Selected
     const [month, setMonth] = useState("")
+    const [monthBool, setMonthBool] = useState(false)
     // Year Selected
     const [year, setYear] = useState("")
+    const [yearBool, setYearBool] = useState(false)
     // Loader
     const [loading, setLoading] = useState(false)
     // Day Intervals for fetching data x7
     const days = [1, 7, 14, 21, 28]
     // Chart Data
-    //const chartData = []
     const [chartData, setChartData] = useState([])
     // Set current year in variable and all years in reverse // setYearLimit function sets limit to available data from api(** stating point/date of data and api **)
     const [chartLoaded, setchartLoaded] = useState(false)
     // Year limit for API data
     let years = [];
-    //Undefined in chartData
-    const [undefined, setUndefined] = useState(false)
     // ERROR
     const [error, setError] = useState(false)
+
+    // set urlArrayBool to true : signifies that urlArray is ready fetch
+    const [urlArrayReady, setUrlArrayReady] = useState(false)
 
 
     let thisYear = new Date().getFullYear()
@@ -87,14 +91,13 @@ export default function SearchBar() {
                 yearString.push(year)
             }
         }
+        setYearBool(true)
     }
 
     useEffect(() => {
         setYearToString();
     }, [indicator, month, year])
 
-
-    // *************** WORKING *******************/
 
     // onChange to select single MONTH
     function selectMonth(e) {
@@ -103,6 +106,7 @@ export default function SearchBar() {
 
     }
 
+
     const monthString = []
 
     let monthNumber = 0;
@@ -110,10 +114,16 @@ export default function SearchBar() {
         for (let i = 0; i < months.length; i++) {
             if (months[i] === month && !null) {
                 monthNumber += i + 1
-                monthString.push(monthNumber.toString())
+                if (monthNumber < 10) {
+                    monthString.push("0" + monthNumber.toString())
+                    setMonthBool(true)
+                } else {
+                    monthString.push(monthNumber.toString())
+                    setMonthBool(true)
+                }
             }
         }
-        console.log(monthString)
+        console.log("MonthString :", monthString)
     }
 
     useEffect(() => {
@@ -121,7 +131,8 @@ export default function SearchBar() {
 
     }, [indicator, month, year])
 
-    /***************  WORKING  *******************/
+
+
 
     // onChange to select INDICATOR
     const indicatorString = []
@@ -132,6 +143,7 @@ export default function SearchBar() {
 
     function setIndicatorString() {
         indicatorString.push(indicator)
+        setIndicatorBool(true)
     }
 
     useEffect(() => {
@@ -141,13 +153,15 @@ export default function SearchBar() {
 
     /**************** FETCH => CHECK URL FOR FULL DATE =>  *****************/
 
+
     // set DATE for fetch parameter
     let fetchDate = []
     function urlCreateDate() {
         if (monthString !== null || yearString !== null) {
             for (let i = 0; i < days.length; i++) {
                 fetchDate.push(days[i] + "-" + monthString[0] + "-" + yearString[0])
-                console.log("fetchDate array: ", fetchDate)
+                //console.log("fetchDate array: ", fetchDate)
+                //setUrlArrayReady(true)
             }
         }
     }
@@ -166,76 +180,102 @@ export default function SearchBar() {
             console.log('i', url + "/" + indicatorString + "/" + fetchDate[i])
             urlArray.push(url + "/" + indicatorString + "/" + fetchDate[i])
             console.log("urlArray", urlArray)
+            setUrlArrayReady(true)
         }
-
     }
+
     useEffect(() => {
         createUrls();
     }, [month, year, indicator])
 
 
-    /// Do fetch at date
-    async function fetchAll() {
-        setLoading(true)
-        setchartLoaded(false)
-        let requests = await urlArray.map(url => fetch(url));
-        Promise.all(requests)
-            .then(responses => {
-                // all responses are resolved successfully
-                for (let response of responses) {
-                    console.log(`${response.url}: ${response.status}`); // shows 200 for every url
-                    
-                }
+    function fetchTest() {
+        if (yearBool === true && monthBool === true && indicatorBool === true) {
+            fetch(url + '/' + indicatorString + '/' + yearString)
+                .then(function (response) {
+                    //console.log(response);
+                    return response.json();
+                }).then(function (yearData) {
+                    console.log(yearData)
+                    data.push(yearData)
+                    setFetchByYear([yearData])
 
-                return responses;
-            })
-            // map array of responses into an array of response.json() to read their content
-            .then(responses => Promise.all(responses.map(r => r.json())))
-            // all JSON answers are parsed
-            .then(endpoint => endpoint.forEach((response, index, array) => {
-                if (response.error > 200) {
-                    console.log("error", error)
-                    setError(true)
-                } else {
-                    //data.filter(n => n !== 'undefined')
+                    compare();
 
-                    console.log("array", array[index].serie);
-                    data.unshift(array[index].serie)
-                       
-                    const filter = data.filter((x) => x !== "undefined")
-                    console.log("filter", filter);
-
-                    console.log("CHECK",filter)
-
-                    let data2 = filter.flat().reverse()
-                    console.log(data2, "<========== DATA FLATTENED")
-
-                    chartData.unshift(...data2)
-                    chartData.splice(5)
-
-                    chartLoader();
-                    setLoading(false)
-                    
-                }
-                console.log("chartdata :", chartData)
-            }
-            ));
-            
-    }
-
-    function chartLoader(){
-        if(chartData.length > 0){
-            setchartLoaded(true);
-        } else if (chartData.length < 5){
-            setLoading(false)
-        
+                }).catch(function (error) {
+                    console.log('Requestfailed', error);
+                });
         }
     }
 
+
+    ///// working Perfectly --- Note : data is not available for all days (weekends etc)
+
+    let data2 = []
+    function compare() {
+        //if (data[0].serie) {
+        for (let i = 0; i < data[0].serie.length; i++) {
+            if (data[0].serie[i].fecha.substring(5, 7) == monthString[0]) {
+
+                let match = data[0].serie[i]
+                data2.push(match)
+
+            }
+        }
+        chartData.splice(0, chartData.length, ...data2);
+        chartData.reverse();
+        setchartLoaded(true)
+    }
+
+
+    function compareToFetchByYear() {
+        let chartDataReset = []
+
+        if (fetchByYear) {
+
+            if (fetchByYear.length > 0) {
+
+                for (let i = 0; i < fetchByYear[0].serie.length; i++) {
+
+                    if (fetchByYear[0].serie[i].fecha.substring(5, 7) == monthString[0]) {
+                        chartDataReset.push(fetchByYear[0].serie[i])
+
+                    }
+
+                }
+
+            }
+        }
+        chartData.splice(0, chartData.length, ...chartDataReset);
+        chartData.reverse();
+        console.log("Chartdata", chartData)
+        console.log("chartDataReset", chartDataReset)
+    }
+
+
+
     useEffect(() => {
-       //chartDataIsLoaded();
-        fetchAll();
+        //chartDataIsLoaded();
+        //fetchAll();
+        fetchTest();
+        compareToFetchByYear()
     }, [month, year, indicator])
+
+
+
+    function chartLoader() {
+        if (typeof chartData === undefined) {
+            setchartLoaded(false);
+        } else if (typeof chartData !== undefined) {
+            setchartLoaded(true)
+            console.log("contains data")
+
+        }
+    }
+
+
+
+
 
 
 
@@ -254,18 +294,7 @@ export default function SearchBar() {
         //setchartLoaded(false)
     }, []);
 
-
-
-    ///////////// How many days in month
-    //let getDaysInMonth = function (month, year) {
-    //    return new Date(year, month, 0).getDate()
-    // }
-    // console.log("days in month =", getDaysInMonth(month, year))
-
-    console.log("chart fully loaded with data", chartLoaded)
-    console.log("Chartdata: ", chartData)
-    ///console.log("typeof chartData", typeof chartData)
-
+    console.log("fetchByYear =>", fetchByYear)
 
 
     return (
@@ -322,34 +351,44 @@ export default function SearchBar() {
             {error && (<Error />)}
             {/* */}
             {chartLoaded && (
+                <>
+                <div>
+                    <h5 className='m-3'><span className=' text-muted m-3'>Indicador: {indicator}</span><span className='text-muted m-3'>Mes: {month}</span> <span className='text-muted m-3'> Año: {year}</span>  </h5>
+                </div>
                 <ResponsiveContainer width="90%" aspect={2.6}>
                     <LineChart
-                        width={500}
-                        height={800}
+                        width={600}
+                        height={1000}
                         data={chartData}
+                        //data={chartData[0][0]}
                         margin={{
-                            top: 80,
-                            right: 50,
-                            left: 50,
+                            top: 50,
+                            right: 30,
+                            left: 20,
                             bottom: 5,
                         }}
 
                     >
-                        <CartesianGrid strokeDasharray="5 5" opacity={0.8} vertical={false} />
+                        <CartesianGrid strokeDasharray="3 3" opacity={0.8} vertical={true} />
                         <XAxis
                             dataKey="fecha"
-                            tickFormatter={(fecha) => fecha.substr(0, 10)}
+                            //domain = {['auto', 'auto']}
+                            tickFormatter={(fecha) => fecha.substring(8, 10) + "-" + month}
+                            
                         />
                         <YAxis
                             dataKey="valor"
-                            tickFormatter={(number) => `$${number.toFixed(2)}`}
-                            domain={[]}
+                            domain={['datamin', 'datamax']}
+                        //tickFormatter={(number) => `$${number.toFixed(2)}`}
+
+
                         />
                         <Tooltip />
                         <Legend />
-                        <Line type="monotone" dataKey="valor" stroke="#8884d8" strokeWidth={5} activeDot={{ r: 10 }} />
+                        <Line type="monotone" dataKey="valor" stroke="#8884d8" strokeWidth={3} activeDot={{ r: 10 }}  />
                     </LineChart>
                 </ResponsiveContainer>
+                </>
             )}
 
 
