@@ -190,9 +190,11 @@ export default function SearchBar() {
 
 
     function fetchTest() {
+
         if (yearBool === true && monthBool === true && indicatorBool === true) {
             fetch(url + '/' + indicatorString + '/' + yearString)
-                .then(function (response) {
+            .then(function (response) {
+                    
                     //console.log(response);
                     return response.json();
                 }).then(function (yearData) {
@@ -201,7 +203,6 @@ export default function SearchBar() {
                     setFetchByYear([yearData])
 
                     compare();
-
                 }).catch(function (error) {
                     console.log('Requestfailed', error);
                 });
@@ -228,6 +229,8 @@ export default function SearchBar() {
     }
 
 
+
+    // compare on second iteration
     function compareToFetchByYear() {
         let chartDataReset = []
 
@@ -242,6 +245,18 @@ export default function SearchBar() {
 
                     }
 
+                    if(fetchByYear[0].codigo !== indicatorString[0]){
+                        console.log("indicator not equal")
+                        fetchTest();
+                    }
+
+                    if(fetchByYear[0].serie[i].fecha.substring(0, 4) !== yearString){
+                        console.log("Year not equal")
+                        fetchTest();
+                    }
+
+                    
+
                 }
 
             }
@@ -249,33 +264,15 @@ export default function SearchBar() {
         chartData.splice(0, chartData.length, ...chartDataReset);
         chartData.reverse();
         console.log("Chartdata", chartData)
-        console.log("chartDataReset", chartDataReset)
+        console.log("chartDataReset", chartDataReset)    
     }
 
 
 
     useEffect(() => {
-        //chartDataIsLoaded();
-        //fetchAll();
         fetchTest();
         compareToFetchByYear()
     }, [month, year, indicator])
-
-
-
-    function chartLoader() {
-        if (typeof chartData === undefined) {
-            setchartLoaded(false);
-        } else if (typeof chartData !== undefined) {
-            setchartLoaded(true)
-            console.log("contains data")
-
-        }
-    }
-
-
-
-
 
 
 
@@ -289,13 +286,9 @@ export default function SearchBar() {
         }).catch(function (error) {
             console.log('Requestfailed', error);
         });
-
-        //setLoading(true)
-        //setchartLoaded(false)
     }, []);
 
-    console.log("fetchByYear =>", fetchByYear)
-
+console.log(fetchByYear)
 
     return (
         <div>
@@ -346,10 +339,9 @@ export default function SearchBar() {
                 </div>
             </nav>
 
-            {!chartLoaded && (<h3 className="m-5 text-secondary">Selecciona el indicicador, año y mes...</h3>)}
             {loading ? (<p className="m-3 text-secondary">Cargando...</p>) : ""}
-            {error && (<Error />)}
-            {/* */}
+            {!chartLoaded ? (<h3 className="m-5 text-secondary">Selecciona el indicicador, año y mes...</h3>) : "" }
+            
             {chartLoaded && (
                 <>
                 <div>
@@ -372,8 +364,7 @@ export default function SearchBar() {
                         <CartesianGrid strokeDasharray="3 3" opacity={0.8} vertical={true} />
                         <XAxis
                             dataKey="fecha"
-                            //domain = {['auto', 'auto']}
-                            tickFormatter={(fecha) => fecha.substring(8, 10) + "-" + month}
+                            //tickFormatter={(fecha) => fecha.substring(8, 10) + "-" + month}
                             
                         />
                         <YAxis
